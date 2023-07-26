@@ -9,6 +9,7 @@ import threading
 import time
 from scipy import signal
 import pyautogui
+import keyboard
 
 UDP_IP = "172.20.10.11" # The IP that is printed in the serial monitor from the ESP32
 SHARED_UDP_PORT = 4210
@@ -56,6 +57,13 @@ rate = 250
 #         data = sock.recv(9*4)
 #         print(data)
 
+def press_and_release(key,press_time,wait_time):
+    keyboard.press(key)
+    time.sleep(press_time)
+    keyboard.release(key)
+    time.sleep(wait_time)
+    return None
+
 def loop():
     global ydata,num_samples
     while True:
@@ -101,9 +109,11 @@ def decision_take(decision,channel):
         if channel==verti_channel:
             if (array_seq==[-1,1,1,-1] or array_seq==[-1,1]):
                 print("Eye down")
+                press_and_release("s",0.7,0.4)
                 #pyautogui.moveRel(0,-50, duration = 0.5)
             elif array_seq==[1,-1,-1,1]:
                 print("Eye up")
+                press_and_release("w",0.8,0.4)
                 #pyautogui.moveRel(0, 50, duration = 1)
             elif array_seq==[1,-1]:
                 print("Blink")
@@ -113,14 +123,16 @@ def decision_take(decision,channel):
         elif channel==hori_Channel:
             if (array_seq==[-1,1,1,-1] or array_seq==[-1,1]):
                 print("Eye left")
+                press_and_release("a",0.6,0.4)
                # pyautogui.moveRel(-50,0, duration = 0.5)
             elif (array_seq==[1,-1,-1,1] or array_seq==[1,-1]):
                 print("Eye right")
+                press_and_release("d",0.6,0.4)
                # pyautogui.moveRel(50,0, duration = 0.5)
             else:
                 print("try again")
 
-        time.sleep(1)
+        #time.sleep(1)
 
 def classifier():
     time.sleep(1)
