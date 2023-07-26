@@ -37,16 +37,16 @@ filtered_curve = []
 orig_curve = []
 baseLine_curve=[]
 decision_curve=[]
-upper_thresh_curve=[]
-lower_thresh_curve=[]
+# upper_thresh_curve=[]
+# lower_thresh_curve=[]
 color = ['b','g','r','c','b','g','r','c','b']
 for i in range(len(show)):
     filtered_curve.append(plot[i].plot(pen='g'))
     orig_curve.append(orig_plot[i].plot(pen='b'))
     baseLine_curve.append(plot[i].plot(pen='r'))
     decision_curve.append(decision_plot[i].plot(pen='r'))
-    upper_thresh_curve.append(plot[i].plot(pen='y'))
-    lower_thresh_curve.append(plot[i].plot(pen='y'))
+    # upper_thresh_curve.append(plot[i].plot(pen='y'))
+    # lower_thresh_curve.append(plot[i].plot(pen='y'))
 xdata = np.arange(1000)  # Number of data points to display on the plot
 ydata = np.zeros((9,1000))
 num_samples = 0
@@ -77,8 +77,8 @@ def update_plot():
         filtered_curve[i].setData(y=filtered[i])
         baseLine_curve[i].setData(y=baseLine_filtered[i])
         decision_curve[i].setData(y=decision_arr[i])
-        upper_thresh_curve[i].setData(y=upper_thresh[i])
-        lower_thresh_curve[i].setData(y=lower_thresh[i])
+        # upper_thresh_curve[i].setData(y=upper_thresh[i])
+        # lower_thresh_curve[i].setData(y=lower_thresh[i])
 
 def second_timer():
     global rate,num_samples
@@ -130,11 +130,11 @@ def classifier():
             decision_take(decision_arr[r],i)
 
 def filter():
-    global rate, filtered, baseLine_filtered,decision_arr,ydata_avg,upper_thresh,lower_thresh,big_difference
+    global rate, filtered, baseLine_filtered,decision_arr,ydata_avg#,upper_thresh,lower_thresh,big_difference
     # bandpass = signal.butter(10, [0.2,40], 'bandpass', fs=rate, output='sos')
-    upper_thresh=np.zeros((len(show),1000))
-    lower_thresh=np.zeros((len(show),1000))
-    big_difference=np.zeros((len(show),10000))
+    # upper_thresh=np.zeros((len(show),1000))
+    # lower_thresh=np.zeros((len(show),1000))
+    # big_difference=np.zeros((len(show),10000))
     while True:
     
         lowpass = signal.butter(30, 80, 'lp', fs=rate, output='sos')
@@ -159,18 +159,20 @@ def filter():
             baseLine_filtered[r]=signal.medfilt(filtered[r], kernel_size=151)
 
         difference=filtered-baseLine_filtered
-        sd=np.std(big_difference,axis=1)
-        k=3
-        samp=baseLine_filtered[:,trigger_sample]
+        # sd=np.std(big_difference,axis=1)
+        # k=3
+        # samp=baseLine_filtered[:,trigger_sample]
 
-        upper_thresh[:,:]=baseLine_filtered+(k*sd).reshape(len(show),1)
-        lower_thresh[:,:]=baseLine_filtered+(-k*sd).reshape(len(show),1)
-        arr1=(difference>(samp+k*sd).reshape(len(show),1)).astype(int)
-        arr2=-(difference<(samp-k*sd).reshape(len(show),1)).astype(int)
+        # upper_thresh[:,:]=baseLine_filtered+(k*sd).reshape(len(show),1)
+        # lower_thresh[:,:]=baseLine_filtered+(-k*sd).reshape(len(show),1)
+        # arr1=(difference>(samp+k*sd).reshape(len(show),1)).astype(int)
+        # arr2=-(difference<(samp-k*sd).reshape(len(show),1)).astype(int)
+        arr1=(difference>2000).astype(int)
+        arr2=-(difference<-1500).astype(int)
 
         decision_arr=arr1+arr2
-        big_difference[:,:-1]=big_difference[:,1:]
-        big_difference[:,-1]=difference[:,-1]
+        # big_difference[:,:-1]=big_difference[:,1:]
+        # big_difference[:,-1]=difference[:,-1]
 # Set up a timer to update the plot
 timer = QtCore.QTimer()
 timer.timeout.connect(update_plot)
