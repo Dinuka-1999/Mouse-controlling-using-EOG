@@ -38,16 +38,16 @@ filtered_curve = []
 orig_curve = []
 baseLine_curve=[]
 decision_curve=[]
-# upper_thresh_curve=[]
-# lower_thresh_curve=[]
+upper_thresh_curve=[]
+lower_thresh_curve=[]
 color = ['b','g','r','c','b','g','r','c','b']
 for i in range(len(show)):
     filtered_curve.append(plot[i].plot(pen='g'))
     orig_curve.append(orig_plot[i].plot(pen='b'))
     baseLine_curve.append(plot[i].plot(pen='r'))
     decision_curve.append(decision_plot[i].plot(pen='r'))
-    # upper_thresh_curve.append(plot[i].plot(pen='y'))
-    # lower_thresh_curve.append(plot[i].plot(pen='y'))
+    upper_thresh_curve.append(plot[i].plot(pen='y'))
+    lower_thresh_curve.append(plot[i].plot(pen='y'))
 xdata = np.arange(1000)  # Number of data points to display on the plot
 ydata = np.zeros((9,1000))
 num_samples = 0
@@ -85,8 +85,8 @@ def update_plot():
         filtered_curve[i].setData(y=filtered[i])
         baseLine_curve[i].setData(y=baseLine_filtered[i])
         decision_curve[i].setData(y=decision_arr[i])
-        # upper_thresh_curve[i].setData(y=upper_thresh[i])
-        # lower_thresh_curve[i].setData(y=lower_thresh[i])
+        upper_thresh_curve[i].setData(y=upper_thresh[i])
+        lower_thresh_curve[i].setData(y=lower_thresh[i])
 
 def second_timer():
     global rate,num_samples
@@ -109,11 +109,11 @@ def decision_take(decision,channel):
         if channel==verti_channel:
             if (array_seq==[-1,1,1,-1] or array_seq==[-1,1]):
                 print("Eye down")
-                press_and_release("s",0.7,0.4)
+                #press_and_release("s",0.7,0.4)
                 #pyautogui.moveRel(0,-50, duration = 0.5)
             elif array_seq==[1,-1,-1,1]:
                 print("Eye up")
-                press_and_release("w",0.8,0.4)
+                #press_and_release("w",0.8,0.4)
                 #pyautogui.moveRel(0, 50, duration = 1)
             elif array_seq==[1,-1]:
                 print("Blink")
@@ -123,16 +123,16 @@ def decision_take(decision,channel):
         elif channel==hori_Channel:
             if (array_seq==[-1,1,1,-1] or array_seq==[-1,1]):
                 print("Eye left")
-                press_and_release("a",0.6,0.4)
+                #press_and_release("a",0.6,0.4)
                # pyautogui.moveRel(-50,0, duration = 0.5)
             elif (array_seq==[1,-1,-1,1] or array_seq==[1,-1]):
                 print("Eye right")
-                press_and_release("d",0.6,0.4)
+               #press_and_release("d",0.6,0.4)
                # pyautogui.moveRel(50,0, duration = 0.5)
             else:
                 print("try again")
 
-        #time.sleep(1)
+        time.sleep(1)
 
 def classifier():
     time.sleep(1)
@@ -142,7 +142,7 @@ def classifier():
             decision_take(decision_arr[r],i)
 
 def filter():
-    global rate, filtered, baseLine_filtered,decision_arr,ydata_avg#,upper_thresh,lower_thresh,big_difference
+    global rate, filtered, baseLine_filtered,decision_arr,ydata_avg,upper_thresh,lower_thresh#,big_difference
     # bandpass = signal.butter(10, [0.2,40], 'bandpass', fs=rate, output='sos')
     # upper_thresh=np.zeros((len(show),1000))
     # lower_thresh=np.zeros((len(show),1000))
@@ -174,13 +174,12 @@ def filter():
         # sd=np.std(big_difference,axis=1)
         # k=3
         # samp=baseLine_filtered[:,trigger_sample]
-
-        # upper_thresh[:,:]=baseLine_filtered+(k*sd).reshape(len(show),1)
-        # lower_thresh[:,:]=baseLine_filtered+(-k*sd).reshape(len(show),1)
+        lower_thresh=baseLine_filtered+np.array([[-2000],[-1500],[1000]])
+        upper_thresh=baseLine_filtered+np.array([[3000],[2000],[1000]])
         # arr1=(difference>(samp+k*sd).reshape(len(show),1)).astype(int)
         # arr2=-(difference<(samp-k*sd).reshape(len(show),1)).astype(int)
-        arr1=(difference>2000).astype(int)
-        arr2=-(difference<-1500).astype(int)
+        arr1=(difference>np.array([[3000],[2000],[1000]])).astype(int)
+        arr2=-(difference<np.array([[-2000],[-1500],[1000]])).astype(int)
 
         decision_arr=arr1+arr2
         # big_difference[:,:-1]=big_difference[:,1:]
