@@ -10,10 +10,20 @@ import time
 from scipy import signal
 import keyboard
 import cv2
-UDP_IP = "192.168.224.143" # The IP that is printed in the serial monitor from the ESP32
-SHARED_UDP_PORT = 4210
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
-sock.connect((UDP_IP, SHARED_UDP_PORT))
+
+# pip install numpy pyqt5 pyqtgraph scipy keyboard opencv-python
+
+
+# UDP_IP = "192.168.224.143" # The IP that is printed in the serial monitor from the ESP32
+# SHARED_UDP_PORT = 4210
+# sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
+# sock.connect((UDP_IP, SHARED_UDP_PORT))
+
+TCP_IP = "192.168.4.21" 
+SHARED_TCP_PORT = 50000
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Internet  # TCP
+sock.connect((TCP_IP, SHARED_TCP_PORT))
+
 trigger_sample=900
 hori_Channel=2
 verti_channel=3
@@ -62,6 +72,15 @@ cv2.createTrackbar('Vertical_lower','Thresholds',2000 ,5000, nothing)
 cv2.createTrackbar('Horizontal_upper','Thresholds',2500 ,5000, nothing)
 cv2.createTrackbar('Horizontal_lower','Thresholds',2500 ,5000, nothing)
 
+def recvall(sock, size):
+    data = bytearray()
+    while len(data) < size:
+        packet = sock.recv(size - len(data))
+        if not packet:
+            raise RuntimeError("Connection closed")
+        data.extend(packet)
+    return data
+
 def sliders():
     global v_up,v_low,h_up,h_low
     while True:
@@ -81,8 +100,8 @@ def press_and_release(key,press_time,wait_time):
 def loop():
     global ydata,num_samples
     while True:
-        # Receive UDP packet
-        data = sock.recv(4*9)
+        # Receive TCP packet
+        data = recvall(sock,4*9)
         value = struct.unpack('iiiiiiiii', data)
 
         for i in show:
@@ -97,8 +116,8 @@ def update_plot():
         filtered_curve[i].setData(y=filtered[i])
         baseLine_curve[i].setData(y=baseLine_filtered[i])
         decision_curve[i].setData(y=decision_arr[i])
-        # upper_thresh_curve[i].setData(y=upper_thresh[i])
-        # lower_thresh_curve[i].setData(y=lower_thresh[i])
+        upper_thresh_curve[i].setData(y=upper_thresh[i])
+        lower_thresh_curve[i].setData(y=lower_thresh[i])
 def second_timer():
     global rate,num_samples
     while True:
@@ -116,27 +135,33 @@ def decision_take(decision,channel):
         # print(array_seq)
         if channel==verti_channel:
             if array_seq[:1]==[-1]:
-                print("Eye down")
-                # press_and_release("s",0.7,0.4)
+                # print("Eye down")
+                press_and_release("s",0.7,0.4)
                 # pyautogui.moveRel(0,-50, duration = 0.5)
+                pass
             elif array_seq[:1]==[1]:
-                print("Eye up")
-                # press_and_release("w",0.8,0.4)
+                # print("Eye up")
+                press_and_release("w",0.8,0.4)
                 #pyautogui.moveRel(0, 50, duration = 1)
+                pass
             else:
-                print("try again")
+                # print("try again")
+                pass
 
         elif channel==hori_Channel:
             if array_seq[:1]==[-1]:
-                print("Eye left")
-                # press_and_release("a",0.6,0.4)
-               # pyautogui.moveRel(-50,0, duration = 0.5)
+                # print("Eye left")
+                press_and_release("a",0.6,0.4)
+                # pyautogui.moveRel(-50,0, duration = 0.5)
+                pass
             elif array_seq[:1]==[1]:
-                print("Eye right")
-                # press_and_release("d",0.6,0.4)
+                # print("Eye right")
+                press_and_release("d",0.6,0.4)
                 # pyautogui.moveRel(50,0, duration = 0.5)
+                pass
             else:
-                print("try again")
+                # print("try again")
+                pass
 
         # time.sleep(1)
 
@@ -172,7 +197,7 @@ def filter():
             
         baseLine_filtered=np.zeros((len(show),ydata.shape[1]))
         for r,i in enumerate(show):
-            baseLine_filtered[r]=signal.medfilt(filtered[r], kernel_size=151)
+            baseLine_filtered[r]=signal.medfilt(filtered[r], kernel_size=251)
         difference=filtered-baseLine_filtered
         lower_thresh=baseLine_filtered+np.array([[h_low],[v_low],[1000]])
         upper_thresh=baseLine_filtered+np.array([[h_up],[v_up],[-1000]])
@@ -189,17 +214,22 @@ if __name__ == "__main__":
     sock.send('Hello ESP32'.encode())
     t1 = threading.Thread(target=loop)
     t1.start()
+    time.sleep(0.1)
     # t2 = threading.Thread(target=second_timer)
     # t2.start()
     # time.sleep(2)
-    t3 = threading.Thread(target=filter)
-    t3.start()
-    t4 = threading.Thread(target=classifier)
-    t4.start()
     t5 = threading.Thread(target=sliders)
     t5.start()
-    time.sleep(2)
+    time.sleep(0.1)
+    t3 = threading.Thread(target=filter)
+    t3.start()
+    time.sleep(0.1)
+    t4 = threading.Thread(target=classifier)
+    t4.start()
+    time.sleep(0.1)
+    # time.sleep(2)
     t6 = threading.Thread(target=update_plot)
     t6.start()
+    time.sleep(0.1)
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
         QApplication.instance().exec_()
